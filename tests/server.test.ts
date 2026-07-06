@@ -22,10 +22,14 @@ describe("itr-mcp server", () => {
     const names = tools.map((t) => t.name).sort();
     expect(names).toEqual([
       "compare_regimes",
+      "compute_hra",
+      "compute_interest_234",
       "compute_tax",
       "list_deductions",
       "list_tax_years",
+      "parse_ais",
       "parse_form26as",
+      "reconcile_documents",
       "schedule_advance_tax",
     ]);
     for (const tool of tools) {

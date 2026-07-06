@@ -1,20 +1,41 @@
 {
   "fy": "2025-26",
   "ay": "2026-27",
-  "rulePackVersion": "1.0.0",
+  "rulePackVersion": "1.1.0",
   "sources": [
     "https://www.incometax.gov.in/iec/foportal/help/individual/return-applicable-1",
     "Finance Act 2025 (new regime slabs, 87A rebate, standard deduction)"
   ],
   "newRegime": {
     "slabs": [
-      { "upTo": 400000, "rate": 0 },
-      { "upTo": 800000, "rate": 0.05 },
-      { "upTo": 1200000, "rate": 0.1 },
-      { "upTo": 1600000, "rate": 0.15 },
-      { "upTo": 2000000, "rate": 0.2 },
-      { "upTo": 2400000, "rate": 0.25 },
-      { "upTo": null, "rate": 0.3 }
+      {
+        "upTo": 400000,
+        "rate": 0
+      },
+      {
+        "upTo": 800000,
+        "rate": 0.05
+      },
+      {
+        "upTo": 1200000,
+        "rate": 0.1
+      },
+      {
+        "upTo": 1600000,
+        "rate": 0.15
+      },
+      {
+        "upTo": 2000000,
+        "rate": 0.2
+      },
+      {
+        "upTo": 2400000,
+        "rate": 0.25
+      },
+      {
+        "upTo": null,
+        "rate": 0.3
+      }
     ],
     "standardDeduction": 75000,
     "rebate87A": {
@@ -27,10 +48,22 @@
   },
   "oldRegime": {
     "slabs": [
-      { "upTo": 250000, "rate": 0 },
-      { "upTo": 500000, "rate": 0.05 },
-      { "upTo": 1000000, "rate": 0.2 },
-      { "upTo": null, "rate": 0.3 }
+      {
+        "upTo": 250000,
+        "rate": 0
+      },
+      {
+        "upTo": 500000,
+        "rate": 0.05
+      },
+      {
+        "upTo": 1000000,
+        "rate": 0.2
+      },
+      {
+        "upTo": null,
+        "rate": 0.3
+      }
     ],
     "seniorExemption": 300000,
     "superSeniorExemption": 500000,
@@ -39,7 +72,10 @@
       "incomeThreshold": 500000,
       "maxRebate": 12500,
       "marginalRelief": false,
-      "excludesSpecialRateIncome": false
+      "excludesSpecialRateIncome": false,
+      "thresholdBasis": "totalIncome",
+      "allowAgainst111A": true,
+      "allowAgainst112A": false
     },
     "deductionCaps": {
       "80C": 150000,
@@ -53,7 +89,12 @@
       "24b_selfOccupied": 200000,
       "housePropertyLossSetOff": 200000
     },
-    "hraMetros": ["Delhi", "Mumbai", "Kolkata", "Chennai"]
+    "hraMetros": [
+      "Delhi",
+      "Mumbai",
+      "Kolkata",
+      "Chennai"
+    ]
   },
   "capitalGains": {
     "stcg111A": 0.2,
@@ -65,10 +106,22 @@
   },
   "surcharge": {
     "slabs": [
-      { "above": 5000000, "rate": 0.1 },
-      { "above": 10000000, "rate": 0.15 },
-      { "above": 20000000, "rate": 0.25 },
-      { "above": 50000000, "rate": 0.37 }
+      {
+        "above": 5000000,
+        "rate": 0.1
+      },
+      {
+        "above": 10000000,
+        "rate": 0.15
+      },
+      {
+        "above": 20000000,
+        "rate": 0.25
+      },
+      {
+        "above": 50000000,
+        "rate": 0.37
+      }
     ],
     "capitalGainsAndDividendCap": 0.15,
     "marginalRelief": true
@@ -77,10 +130,22 @@
   "advanceTax": {
     "threshold": 10000,
     "installments": [
-      { "dueDate": "06-15", "cumulativePct": 0.15 },
-      { "dueDate": "09-15", "cumulativePct": 0.45 },
-      { "dueDate": "12-15", "cumulativePct": 0.75 },
-      { "dueDate": "03-15", "cumulativePct": 1.0 }
+      {
+        "dueDate": "06-15",
+        "cumulativePct": 0.15
+      },
+      {
+        "dueDate": "09-15",
+        "cumulativePct": 0.45
+      },
+      {
+        "dueDate": "12-15",
+        "cumulativePct": 0.75
+      },
+      {
+        "dueDate": "03-15",
+        "cumulativePct": 1.0
+      }
     ],
     "interest234C_ratePerMonth": 0.01,
     "interest234B_ratePerMonth": 0.01,
@@ -93,5 +158,99 @@
     "belated": "2026-12-31",
     "revised": "2027-03-31"
   },
-  "lateFee234F": { "default": 5000, "incomeUpTo5L": 1000 }
+  "lateFee234F": {
+    "default": 5000,
+    "incomeUpTo5L": 1000
+  },
+  "rounding": {
+    "income288A": 10,
+    "taxPayable288B": 10,
+    "interestBase119A": 100
+  },
+  "interest": {
+    "ratePerMonth": 0.01,
+    "partMonthIsFullMonth": true,
+    "s234B": {
+      "trigger": "paidLt90PctAssessed",
+      "fromDate": "AY-04-01"
+    },
+    "s234C": {
+      "installments": [
+        {
+          "due": "2025-06-15",
+          "cumulativePct": 0.15,
+          "safeHarborPct": 0.12,
+          "months": 3
+        },
+        {
+          "due": "2025-09-15",
+          "cumulativePct": 0.45,
+          "safeHarborPct": 0.36,
+          "months": 3
+        },
+        {
+          "due": "2025-12-15",
+          "cumulativePct": 0.75,
+          "safeHarborPct": null,
+          "months": 3
+        },
+        {
+          "due": "2026-03-15",
+          "cumulativePct": 1.0,
+          "safeHarborPct": null,
+          "months": 1
+        }
+      ],
+      "presumptive": {
+        "due": "2026-03-15",
+        "pct": 1.0,
+        "months": 1
+      },
+      "minLiability": 10000
+    },
+    "seniorNoPgbpExempt": true
+  },
+  "hra": {
+    "metroCities": [
+      "Delhi",
+      "Mumbai",
+      "Kolkata",
+      "Chennai"
+    ],
+    "metroPct": 0.5,
+    "nonMetroPct": 0.4,
+    "rentExcessOfSalaryPct": 0.1,
+    "regimes": [
+      "old"
+    ],
+    "warnings": {
+      "landlordPanRentPerYear": 100000,
+      "receiptWaiverHraPerMonth": 3000
+    }
+  },
+  "deduction80GG": {
+    "capPerYear": 60000,
+    "pctOfATI": 0.25,
+    "rentExcessOfATIPct": 0.1,
+    "regimes": [
+      "old"
+    ]
+  },
+  "reconcile": {
+    "toleranceRupees": {
+      "pass": 10,
+      "warn": 100,
+      "high": 10000
+    }
+  },
+  "tdsSectionToHead": {
+    "192": "salary",
+    "194A": "otherSources",
+    "194": "dividend",
+    "194I": "houseProperty",
+    "194IA": "capitalGains",
+    "194H": "business",
+    "194J": "business",
+    "194S": "vda"
+  }
 }

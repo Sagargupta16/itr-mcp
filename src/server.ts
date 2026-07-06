@@ -3,7 +3,15 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import { scheduleAdvanceTax } from "./engine/advance-tax.js";
 import { computeTax, type TaxInput } from "./engine/compute.js";
+import { compute80GG, computeHra, type HraPeriod } from "./engine/hra.js";
+import { interest234B, interest234C } from "./engine/interest.js";
+import { type ReconcileInput, reconcile } from "./engine/reconcile.js";
 import { availableYears, DEFAULT_FY, loadRulePack } from "./engine/rulepack.js";
+import {
+  AisDecryptError,
+  decryptAis,
+  parseAisDocument,
+} from "./parsers/ais.js";
 import { parseForm26AS } from "./parsers/form26as.js";
 
 const READ_ONLY = { readOnlyHint: true, openWorldHint: false } as const;
@@ -96,7 +104,7 @@ function fail(message: string) {
 export function createServer(): McpServer {
   const server = new McpServer({
     name: "itr-mcp",
-    version: "0.1.0",
+    version: "0.2.0",
   });
 
   server.registerTool(
@@ -275,6 +283,274 @@ export function createServer(): McpServer {
         ],
         structuredContent: parsed as unknown as Record<string, unknown>,
       };
+    },
+  );
+
+  server.registerTool(
+    "parse_ais",
+    {
+      title: "Parse AIS (Annual Information Statement)",
+      description:
+        "Decrypt and parse the AIS JSON export from the income tax portal, entirely on-device. Provide pan + dob (DDMMYYYY) to derive the password, or pass it explicitly. Returns taxpayer info and normalized information rows (TDS entries, SFT transactions) with amounts, dates, and codes extracted by column label. The decryption scheme is reverse-engineered from the AIS utility; if it fails, use the portal's CSV export as a fallback and file an issue.",
+      inputSchema: {
+        path: z
+          .string()
+          .describe("Absolute path to the downloaded AIS .json file"),
+        pan: z
+          .string()
+          .regex(/^[A-Za-z]{5}\d{4}[A-Za-z]$/)
+          .optional()
+          .describe("PAN (used to derive the decryption password)"),
+        dob: z
+          .string()
+          .optional()
+          .describe(
+            "Date of birth as DDMMYYYY (or DD-MM-YYYY); date of incorporation for non-individuals",
+          ),
+        password: z
+          .string()
+          .optional()
+          .describe(
+            "Explicit decryption password (overrides pan+dob derivation)",
+          ),
+      },
+      annotations: READ_ONLY,
+    },
+    async (args) => {
+      let text: string;
+      try {
+        text = await readFile(args.path, "utf8");
+      } catch {
+        return fail(
+          `could not read file: ${args.path}. Provide the absolute path to the AIS JSON download.`,
+        );
+      }
+      try {
+        const doc = decryptAis(text, {
+          ...(args.pan ? { pan: args.pan } : {}),
+          ...(args.dob ? { dob: args.dob } : {}),
+          ...(args.password ? { password: args.password } : {}),
+        });
+        const parsed = parseAisDocument(doc);
+        // PII hygiene: mask PAN-like values in the text mirror.
+        const masked = JSON.stringify(parsed, null, 2).replace(
+          /\b([A-Z]{3})[A-Z]{2}\d{4}([A-Z])\b/g,
+          "$1XXXXXX$2",
+        );
+        return {
+          content: [{ type: "text" as const, text: masked }],
+          structuredContent: parsed as unknown as Record<string, unknown>,
+        };
+      } catch (err) {
+        if (err instanceof AisDecryptError) return fail(err.message);
+        return fail(
+          `AIS parse failed: ${err instanceof Error ? err.message : err}`,
+        );
+      }
+    },
+  );
+
+  server.registerTool(
+    "compute_interest_234",
+    {
+      title: "Compute 234B/234C interest",
+      description:
+        "Deterministic sections 234B and 234C interest on advance-tax shortfalls. 234B: 1%/month on assessed-minus-advance when advance < 90% (from 1 April of the AY). 234C: per-installment shortfalls with the statutory 12%/36% safe harbors for June/September. Rule 119A rounding applied (principal floored to Rs 100, part month = full month).",
+      inputSchema: {
+        assessedTax: z
+          .number()
+          .min(0)
+          .describe("Tax on total income minus TDS/TCS and reliefs, in INR"),
+        advanceTaxPaid: z
+          .number()
+          .min(0)
+          .default(0)
+          .describe("Total advance tax paid during the FY"),
+        monthsFor234B: z
+          .number()
+          .int()
+          .min(0)
+          .max(24)
+          .default(4)
+          .describe(
+            "Months from 1 April of the AY to payment/assessment (part month = full month)",
+          ),
+        cumulativePaid: z
+          .array(z.number().min(0))
+          .length(4)
+          .optional()
+          .describe(
+            "Cumulative advance tax paid by Jun 15 / Sep 15 / Dec 15 / Mar 15, for 234C",
+          ),
+        presumptive: z
+          .boolean()
+          .default(false)
+          .describe("44AD/44ADA: single 100% installment by Mar 15"),
+        fy: z.string().default(DEFAULT_FY),
+      },
+      annotations: READ_ONLY,
+    },
+    async (args) => {
+      try {
+        const pack = loadRulePack(args.fy);
+        const b = interest234B(
+          {
+            assessedTax: args.assessedTax,
+            advanceTaxPaid: args.advanceTaxPaid,
+            months: args.monthsFor234B,
+          },
+          pack,
+        );
+        const c = args.cumulativePaid
+          ? interest234C(
+              {
+                taxDueOnReturnedIncome: args.assessedTax,
+                cumulativePaid: args.cumulativePaid as [
+                  number,
+                  number,
+                  number,
+                  number,
+                ],
+                ...(args.presumptive ? { presumptive: true } : {}),
+              },
+              pack,
+            )
+          : null;
+        return ok({
+          fy: pack.fy,
+          section234B: b,
+          section234C: c,
+          totalInterest: b.interest + (c?.totalInterest ?? 0),
+          disclaimers: [
+            "Not tax advice. Capital-gains/dividend 234C exclusions (first proviso) are not auto-applied.",
+            "Resident seniors (60+) with no business income owe no advance tax, hence no 234B/234C.",
+          ],
+        });
+      } catch (err) {
+        return fail(err instanceof Error ? err.message : String(err));
+      }
+    },
+  );
+
+  server.registerTool(
+    "compute_hra",
+    {
+      title: "Compute HRA exemption (+80GG)",
+      description:
+        "HRA exemption per Rule 2A: least of (actual HRA, rent minus 10% of salary, 50% metro / 40% non-metro of salary), computed period-wise. Salary = basic + retirement-forming DA + fixed-percentage turnover commission. Old regime only; metro list for FY 2025-26 is Delhi/Mumbai/Kolkata/Chennai. Also computes the 80GG alternative for rent payers with no HRA.",
+      inputSchema: {
+        periods: z
+          .array(
+            z.object({
+              months: z.number().int().min(1).max(12),
+              basic: z.number().min(0),
+              daRetirement: z.number().min(0).optional(),
+              turnoverCommission: z.number().min(0).optional(),
+              hraReceived: z.number().min(0),
+              rentPaid: z.number().min(0),
+              isMetro: z.boolean(),
+            }),
+          )
+          .min(1)
+          .describe(
+            "Homogeneous periods (amounts are per-period totals, not monthly)",
+          ),
+        regime: z.enum(["old", "new"]).default("old"),
+        eightyGG: z
+          .object({
+            rentPaid: z.number().min(0),
+            adjustedTotalIncome: z.number().min(0),
+          })
+          .optional()
+          .describe(
+            "Compute 80GG instead (requires: no HRA received at any time in the year)",
+          ),
+        fy: z.string().default(DEFAULT_FY),
+      },
+      annotations: READ_ONLY,
+    },
+    async (args) => {
+      try {
+        const pack = loadRulePack(args.fy);
+        if (args.eightyGG) {
+          return ok(
+            compute80GG(
+              args.eightyGG.rentPaid,
+              args.eightyGG.adjustedTotalIncome,
+              pack,
+            ),
+          );
+        }
+        return ok(computeHra(args.periods as HraPeriod[], pack, args.regime));
+      } catch (err) {
+        return fail(err instanceof Error ? err.message : String(err));
+      }
+    },
+  );
+
+  server.registerTool(
+    "reconcile_documents",
+    {
+      title: "Reconcile Form 16 vs AIS vs 26AS",
+      description:
+        "Cross-document mismatch report -- the checks that pre-empt 143(1)(a) intimations and 139(9) defect notices: TDS claimed vs 26AS deposited (the ledger of record), missing-employer detection, AIS interest/dividend vs declared, Form 16 vs 26AS per-TAN totals. Pass whichever documents you have; checks needing missing inputs are reported as skipped.",
+      inputSchema: {
+        form26asTds: z
+          .array(
+            z.object({
+              tan: z.string(),
+              deductorName: z.string().optional(),
+              section: z.string().optional(),
+              amountPaid: z.number(),
+              tdsDeposited: z.number(),
+            }),
+          )
+          .optional()
+          .describe("TDS entries from parse_form26as"),
+        form16: z
+          .array(
+            z.object({
+              tan: z.string(),
+              grossSalary: z.number().optional(),
+              tdsDeposited: z.number(),
+            }),
+          )
+          .optional()
+          .describe("Per-employer Form 16 Part A figures"),
+        ais: z
+          .object({
+            salaryByTan: z.record(z.string(), z.number()).optional(),
+            interestTotal: z.number().optional(),
+            dividendTotal: z.number().optional(),
+          })
+          .optional()
+          .describe("AIS aggregates (from parse_ais rows)"),
+        return: z
+          .object({
+            tdsClaimed: z.number().optional(),
+            salaryDeclared: z.number().optional(),
+            interestDeclared: z.number().optional(),
+            dividendDeclared: z.number().optional(),
+          })
+          .optional()
+          .describe("Figures from the draft return"),
+        fy: z.string().default(DEFAULT_FY),
+      },
+      annotations: READ_ONLY,
+    },
+    async (args) => {
+      try {
+        const pack = loadRulePack(args.fy);
+        const input: ReconcileInput = {
+          ...(args.form26asTds ? { form26asTds: args.form26asTds } : {}),
+          ...(args.form16 ? { form16: args.form16 } : {}),
+          ...(args.ais ? { ais: args.ais } : {}),
+          ...(args.return ? { return: args.return } : {}),
+        };
+        return ok(reconcile(input, pack));
+      } catch (err) {
+        return fail(err instanceof Error ? err.message : String(err));
+      }
     },
   );
 
