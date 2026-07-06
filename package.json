@@ -1,0 +1,57 @@
+{
+  "name": "itr-mcp",
+  "version": "0.1.0",
+  "description": "Local-first MCP server for Indian income tax: compute tax, compare regimes, plan advance tax, and parse tax documents -- entirely on your machine",
+  "keywords": [
+    "mcp",
+    "mcp-server",
+    "india",
+    "income-tax",
+    "itr",
+    "form-26as",
+    "tax-calculator",
+    "claude"
+  ],
+  "license": "MIT",
+  "author": "Sagar Gupta <sg85207@gmail.com> (https://github.com/Sagargupta16)",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Sagargupta16/itr-mcp.git"
+  },
+  "mcpName": "io.github.sagargupta16/itr-mcp",
+  "type": "module",
+  "bin": {
+    "itr-mcp": "./dist/index.js"
+  },
+  "main": "./dist/index.js",
+  "files": [
+    "dist",
+    "data"
+  ],
+  "engines": {
+    "node": ">=22"
+  },
+  "packageManager": "pnpm@11.10.0",
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "lint": "biome check .",
+    "lint:fix": "biome check --write .",
+    "typecheck": "tsc --noEmit",
+    "inspect": "npx @modelcontextprotocol/inspector node dist/index.js",
+    "prepublishOnly": "pnpm build"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.29.0",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.5.2",
+    "@types/node": "^26.1.0",
+    "tsup": "^8.5.1",
+    "typescript": "^6.0.3",
+    "vitest": "^4.1.9"
+  }
+}

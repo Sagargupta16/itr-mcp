@@ -1,0 +1,21 @@
+{
+  "compilerOptions": {
+    // tsup's dts rollup injects baseUrl, deprecated in TS 6 -- silence until tsup catches up
+    "ignoreDeprecations": "6.0",
+    "target": "ES2023",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "lib": ["ES2023"],
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "exactOptionalPropertyTypes": true,
+    "verbatimModuleSyntax": true,
+    "skipLibCheck": true,
+    "declaration": true,
+    "outDir": "dist",
+    "rootDir": "src",
+    "types": ["node"]
+  },
+  "include": ["src"],
+  "exclude": ["dist", "node_modules", "tests", "fixtures"]
+}

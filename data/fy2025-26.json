@@ -1,0 +1,97 @@
+{
+  "fy": "2025-26",
+  "ay": "2026-27",
+  "rulePackVersion": "1.0.0",
+  "sources": [
+    "https://www.incometax.gov.in/iec/foportal/help/individual/return-applicable-1",
+    "Finance Act 2025 (new regime slabs, 87A rebate, standard deduction)"
+  ],
+  "newRegime": {
+    "slabs": [
+      { "upTo": 400000, "rate": 0 },
+      { "upTo": 800000, "rate": 0.05 },
+      { "upTo": 1200000, "rate": 0.1 },
+      { "upTo": 1600000, "rate": 0.15 },
+      { "upTo": 2000000, "rate": 0.2 },
+      { "upTo": 2400000, "rate": 0.25 },
+      { "upTo": null, "rate": 0.3 }
+    ],
+    "standardDeduction": 75000,
+    "rebate87A": {
+      "incomeThreshold": 1200000,
+      "maxRebate": 60000,
+      "marginalRelief": true,
+      "excludesSpecialRateIncome": true
+    },
+    "surchargeCapRate": 0.25
+  },
+  "oldRegime": {
+    "slabs": [
+      { "upTo": 250000, "rate": 0 },
+      { "upTo": 500000, "rate": 0.05 },
+      { "upTo": 1000000, "rate": 0.2 },
+      { "upTo": null, "rate": 0.3 }
+    ],
+    "seniorExemption": 300000,
+    "superSeniorExemption": 500000,
+    "standardDeduction": 50000,
+    "rebate87A": {
+      "incomeThreshold": 500000,
+      "maxRebate": 12500,
+      "marginalRelief": false,
+      "excludesSpecialRateIncome": false
+    },
+    "deductionCaps": {
+      "80C": 150000,
+      "80CCD1B": 50000,
+      "80D_self": 25000,
+      "80D_self_senior": 50000,
+      "80D_parents": 25000,
+      "80D_parents_senior": 50000,
+      "80TTA": 10000,
+      "80TTB": 50000,
+      "24b_selfOccupied": 200000,
+      "housePropertyLossSetOff": 200000
+    },
+    "hraMetros": ["Delhi", "Mumbai", "Kolkata", "Chennai"]
+  },
+  "capitalGains": {
+    "stcg111A": 0.2,
+    "ltcg112A": 0.125,
+    "ltcg112AExemption": 125000,
+    "grandfatheringDate": "2018-01-31",
+    "rateChangeBoundary": "2024-07-23",
+    "debtSlabAcquisitionBoundary": "2023-04-01"
+  },
+  "surcharge": {
+    "slabs": [
+      { "above": 5000000, "rate": 0.1 },
+      { "above": 10000000, "rate": 0.15 },
+      { "above": 20000000, "rate": 0.25 },
+      { "above": 50000000, "rate": 0.37 }
+    ],
+    "capitalGainsAndDividendCap": 0.15,
+    "marginalRelief": true
+  },
+  "cess": 0.04,
+  "advanceTax": {
+    "threshold": 10000,
+    "installments": [
+      { "dueDate": "06-15", "cumulativePct": 0.15 },
+      { "dueDate": "09-15", "cumulativePct": 0.45 },
+      { "dueDate": "12-15", "cumulativePct": 0.75 },
+      { "dueDate": "03-15", "cumulativePct": 1.0 }
+    ],
+    "interest234C_ratePerMonth": 0.01,
+    "interest234B_ratePerMonth": 0.01,
+    "section234B_paidThresholdPct": 0.9
+  },
+  "deadlines": {
+    "itr1_2": "2026-07-31",
+    "itr3_4_nonAudit": "2026-08-31",
+    "audit": "2026-10-31",
+    "belated": "2026-12-31",
+    "revised": "2027-03-31"
+  },
+  "lateFee234F": { "default": 5000, "incomeUpTo5L": 1000 }
+}

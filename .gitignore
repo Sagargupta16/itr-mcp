@@ -1,0 +1,17 @@
+# deps / build
+node_modules/
+dist/
+
+# env / secrets
+.env
+.env.*
+!.env.example
+
+# editor / os
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# test artifacts
+coverage/
