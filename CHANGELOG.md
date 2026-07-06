@@ -3,6 +3,24 @@
 All notable changes to this project will be documented in this file.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versioning follows [SemVer](https://semver.org/).
 
+## [0.2.0] - 2026-07-06
+
+### Added
+
+- `parse_ais`: on-device decryption (AES-256-CBC, PBKDF2-HMAC-SHA256 x1000, password derived from PAN + DOB with the reverse-engineered pepper + un-peppered fallbacks + explicit override) and normalization of the AIS JSON export -- taxpayer info + flat information rows with label-matched amounts/dates/codes, PAN masked in text output
+- `reconcile_documents`: Form 16 vs AIS vs 26AS mismatch report (H1 TDS over-claim vs 26AS, H3 missing-employer TAN, H4/H5 undeclared AIS interest/dividend, M1 Form 16-vs-26AS per TAN, M3 gross-salary-vs-AIS) with tiered tolerances (Rs 10 statutory slack), skipped-check reporting, and notice-section mapping (143(1)(a), 139(9))
+- `compute_interest_234`: sections 234B/234C with Rule 119A rounding (interest principal floored to Rs 100, part month = full month), statutory 12%/36% safe harbors measured back from 15%/45% when breached, presumptive single-installment mode -- pinned to 5 published golden cases (Suraj 920, Khushal 93, company 605, ClearTax 2,600, boundary 12%/11.99%)
+- `compute_hra`: Rule 2A least-of-three, period-wise, salary = basic + retirement-forming DA + fixed-% turnover commission (Gestetner); FY 2025-26 metro list correctly 4 cities (the 8-city expansion is FY 2026-27); landlord-PAN warning above 1L rent; 80GG companion with its three limbs
+- Rule pack 1.1.0: rounding hierarchy (288A/288B/119A), interest config with per-installment safe harbors, HRA + 80GG config, reconcile tolerances, TDS-section-to-income-head map
+
+### Fixed
+
+- Old-regime 87A semantics: the 5L threshold now tests TOTAL income including capital gains (was normal income only), and the rebate can offset 111A STCG tax under the old regime (s.112A(6) continues to bar 112A in both regimes) -- driven by rule-pack flags
+
+### Changed
+
+- Test suite grown to 47 tests including AIS encrypt/decrypt round-trips and all published interest/HRA golden cases
+
 ## [0.1.0] - 2026-07-06
 
 ### Added

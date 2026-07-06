@@ -12,6 +12,53 @@ export interface Rebate87A {
   maxRebate: number;
   marginalRelief: boolean;
   excludesSpecialRateIncome: boolean;
+  /** Old regime: the 5L threshold tests TOTAL income incl. capital gains. */
+  thresholdBasis?: "totalIncome" | "normalIncome";
+  /** Old regime: 87A can offset 111A STCG tax (s.112A(6) bars 112A in both). */
+  allowAgainst111A?: boolean;
+  allowAgainst112A?: boolean;
+}
+
+export interface Interest234CConfig {
+  installments: {
+    due: string;
+    cumulativePct: number;
+    safeHarborPct: number | null;
+    months: number;
+  }[];
+  presumptive: { due: string; pct: number; months: number };
+  minLiability: number;
+}
+
+export interface InterestConfig {
+  ratePerMonth: number;
+  partMonthIsFullMonth: boolean;
+  s234B: { trigger: string; fromDate: string };
+  s234C: Interest234CConfig;
+  seniorNoPgbpExempt: boolean;
+}
+
+export interface HraConfig {
+  metroCities: string[];
+  metroPct: number;
+  nonMetroPct: number;
+  rentExcessOfSalaryPct: number;
+  regimes: string[];
+  warnings: {
+    landlordPanRentPerYear: number;
+    receiptWaiverHraPerMonth: number;
+  };
+}
+
+export interface Deduction80GGConfig {
+  capPerYear: number;
+  pctOfATI: number;
+  rentExcessOfATIPct: number;
+  regimes: string[];
+}
+
+export interface ReconcileConfig {
+  toleranceRupees: { pass: number; warn: number; high: number };
 }
 
 export interface RulePack {
@@ -57,6 +104,16 @@ export interface RulePack {
   };
   deadlines: Record<string, string>;
   lateFee234F: { default: number; incomeUpTo5L: number };
+  rounding?: {
+    income288A: number;
+    taxPayable288B: number;
+    interestBase119A: number;
+  };
+  interest?: InterestConfig;
+  hra?: HraConfig;
+  deduction80GG?: Deduction80GGConfig;
+  reconcile?: ReconcileConfig;
+  tdsSectionToHead?: Record<string, string>;
 }
 
 // Bundled (dist/index.js) sits one level below the repo root; source

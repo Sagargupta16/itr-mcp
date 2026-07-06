@@ -65,17 +65,28 @@ export function slabTax(income: number, slabs: Slab[]): number {
 
 function applyRebate87A(
   normalIncome: number,
+  totalIncome: number,
   normalSlabTax: number,
+  stcgTax: number,
   rebate: Rebate87A,
 ): number {
-  if (normalIncome > rebate.incomeThreshold) {
+  // Old regime: the 5L threshold tests TOTAL income (incl. capital gains);
+  // new regime: 12L threshold tests normal income only (special-rate income
+  // excluded from both the test and the rebate).
+  const testIncome =
+    rebate.thresholdBasis === "totalIncome" ? totalIncome : normalIncome;
+
+  // Old regime 87A can offset 111A STCG tax; s.112A(6) bars 112A everywhere.
+  const rebatableTax = normalSlabTax + (rebate.allowAgainst111A ? stcgTax : 0);
+
+  if (testIncome > rebate.incomeThreshold) {
     if (!rebate.marginalRelief) return 0;
     // Marginal relief: tax payable cannot exceed income above the threshold.
-    const excess = normalIncome - rebate.incomeThreshold;
-    if (normalSlabTax > excess) return normalSlabTax - excess;
+    const excess = testIncome - rebate.incomeThreshold;
+    if (rebatableTax > excess) return rebatableTax - excess;
     return 0;
   }
-  return Math.min(normalSlabTax, rebate.maxRebate);
+  return Math.min(rebatableTax, rebate.maxRebate);
 }
 
 function computeSurcharge(
@@ -149,15 +160,6 @@ export function computeTax(input: TaxInput, pack: RulePack): TaxBreakdown {
 
   const normalSlabTax = slabTax(taxableNormalIncome, regimeRules.slabs);
 
-  // 87A: on normal income only under the new regime (special-rate income
-  // excluded from both the threshold test and the rebate).
-  const rebate = applyRebate87A(
-    taxableNormalIncome,
-    normalSlabTax,
-    regimeRules.rebate87A,
-  );
-  const taxOnNormal = Math.max(0, normalSlabTax - rebate);
-
   const stcgTax = input.stcg111A * pack.capitalGains.stcg111A;
   const taxableLtcg = Math.max(
     0,
@@ -165,13 +167,31 @@ export function computeTax(input: TaxInput, pack: RulePack): TaxBreakdown {
   );
   const ltcgTax = taxableLtcg * pack.capitalGains.ltcg112A;
 
-  const taxBeforeSurcharge = taxOnNormal + stcgTax + ltcgTax;
   const totalIncome = taxableNormalIncome + input.stcg111A + input.ltcg112A;
+
+  // 87A: new regime tests normal income only and never touches CG tax;
+  // old regime tests total income and can offset 111A (rule-pack flags).
+  const rebate = applyRebate87A(
+    taxableNormalIncome,
+    totalIncome,
+    normalSlabTax,
+    stcgTax,
+    regimeRules.rebate87A,
+  );
+  // Rebate consumes slab tax first, then (old regime only) 111A tax.
+  const rebateOnNormal = Math.min(rebate, normalSlabTax);
+  const rebateOnStcg = regimeRules.rebate87A.allowAgainst111A
+    ? Math.min(rebate - rebateOnNormal, stcgTax)
+    : 0;
+  const taxOnNormal = Math.max(0, normalSlabTax - rebateOnNormal);
+  const stcgTaxAfterRebate = Math.max(0, stcgTax - rebateOnStcg);
+
+  const taxBeforeSurcharge = taxOnNormal + stcgTaxAfterRebate + ltcgTax;
 
   const surcharge = computeSurcharge(
     totalIncome,
     taxOnNormal,
-    stcgTax + ltcgTax,
+    stcgTaxAfterRebate + ltcgTax,
     pack,
     input.regime,
   );
@@ -193,7 +213,7 @@ export function computeTax(input: TaxInput, pack: RulePack): TaxBreakdown {
     taxableLtcg112A: taxableLtcg,
     slabTax: round(normalSlabTax),
     rebate87A: round(rebate),
-    stcgTax: round(stcgTax),
+    stcgTax: round(stcgTaxAfterRebate),
     ltcgTax: round(ltcgTax),
     taxBeforeSurcharge: round(taxBeforeSurcharge),
     surcharge: round(surcharge),
