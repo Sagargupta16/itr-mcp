@@ -1,8 +1,22 @@
 # itr-mcp
 
+[![npm](https://img.shields.io/npm/v/itr-mcp?label=npm)](https://www.npmjs.com/package/itr-mcp)
+[![CI](https://github.com/Sagargupta16/itr-mcp/actions/workflows/ci.yml/badge.svg)](https://github.com/Sagargupta16/itr-mcp/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![MCP](https://img.shields.io/badge/MCP-stdio-blueviolet)](https://modelcontextprotocol.io)
+
 Local-first MCP server for Indian income tax. Ask Claude your tax questions and get deterministic answers computed on your machine -- no accounts, no uploads, no cloud.
 
 Works with Claude Desktop, Claude Code, and any MCP client.
+
+```
+You:    My CTC is 18L with 50K employer NPS -- which regime for FY 2025-26?
+Claude: [compare_regimes] New regime: 1,87,200. Old regime (with your deductions): 2,10,600.
+        Recommended: new regime, saves Rs 23,400.
+
+You:    And if I harvest 1.5L of long-term equity gains this year?
+Claude: [compute_tax] LTCG 1,50,000 - 1,25,000 exemption = 25,000 taxable at 12.5% = Rs 3,125 + cess.
+```
 
 ## Why
 
