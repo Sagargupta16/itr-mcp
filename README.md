@@ -88,8 +88,8 @@ node dist/index.js   # stdio server
 
 - [x] **v0.1** -- tax engine (both regimes + CG + surcharge + cess), regime comparison, advance tax, deduction checklist, 26AS text parser
 - [x] **v0.2** -- `parse_ais` (encrypted AIS JSON, on-device decrypt), `reconcile_documents` (the #1-notice-trigger checks), 234B/234C interest with golden-case tests, HRA + 80GG calculators, old-regime 87A semantics fix
-- [ ] **v0.3** -- `parse_form16` (TRACES PDF), mutual fund CAS via casparser, broker capital-gains statements (Zerodha tax P&L), capital gains aggregation
-- [ ] **v0.4** -- draft ITR JSON export for the official offline utility, `.mcpb` one-click Claude Desktop bundle, MCP registry listing
+- [ ] **v0.3** (priorities validated against a real AY 2026-27 filing) -- `compute_loss_setoff` (BFLA/CFL engine, [#4](https://github.com/Sagargupta16/itr-mcp/issues/4)), `recommend_itr_form` with loss-continuity awareness ([#3](https://github.com/Sagargupta16/itr-mcp/issues/3)), `parse_form16` (TRACES PDF), broker capital-gains parsers -- Groww first, then Zerodha ([#7](https://github.com/Sagargupta16/itr-mcp/issues/7))
+- [ ] **v0.4** -- `compute_schedule_fa` (foreign assets/RSU, Rule 115 rates, [#5](https://github.com/Sagargupta16/itr-mcp/issues/5)), portal quirks playbook ([#6](https://github.com/Sagargupta16/itr-mcp/issues/6)), mutual fund CAS via casparser, draft ITR JSON export, `.mcpb` one-click Claude Desktop bundle, MCP registry listing
 
 ## Development
 
