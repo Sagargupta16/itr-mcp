@@ -14,7 +14,7 @@ Local-first MCP server for Indian income tax (FY 2025-26 / AY 2026-27): determin
 
 ## Stack
 
-- **Language**: TypeScript 5 (strict, ESM, NodeNext)
+- **Language**: TypeScript 6 (strict, ESM, NodeNext)
 - **Framework**: @modelcontextprotocol/sdk 1.29 (stdio transport only), zod 4
 - **Database**: none -- rule packs are JSON files in `data/`
 - **Package manager**: pnpm
