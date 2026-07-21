@@ -6,4 +6,4 @@ import { createServer } from "./server.js";
 const server = createServer();
 const transport = new StdioServerTransport();
 await server.connect(transport);
-console.error("itr-mcp ready (stdio)");
+console.error("itr-agent ready (stdio)");

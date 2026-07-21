@@ -5,8 +5,8 @@ Thanks for considering a contribution. Tax software has a higher correctness bar
 ## Setup
 
 ```bash
-git clone https://github.com/Sagargupta16/itr-mcp
-cd itr-mcp
+git clone https://github.com/Sagargupta16/itr-agent
+cd itr-agent
 pnpm install
 pnpm test
 ```
