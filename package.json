@@ -1,6 +1,6 @@
 {
-  "name": "itr-mcp",
-  "version": "0.2.0",
+  "name": "itr-agent",
+  "version": "0.3.0",
   "description": "Local-first MCP server for Indian income tax: compute tax, compare regimes, plan advance tax, and parse tax documents -- entirely on your machine",
   "keywords": [
     "mcp",
@@ -10,18 +10,19 @@
     "itr",
     "form-26as",
     "tax-calculator",
-    "claude"
+    "claude",
+    "agent"
   ],
   "license": "MIT",
   "author": "Sagar Gupta <sg85207@gmail.com> (https://github.com/Sagargupta16)",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Sagargupta16/itr-mcp.git"
+    "url": "git+https://github.com/Sagargupta16/itr-agent.git"
   },
-  "mcpName": "io.github.sagargupta16/itr-mcp",
+  "mcpName": "io.github.sagargupta16/itr-agent",
   "type": "module",
   "bin": {
-    "itr-mcp": "./dist/index.js"
+    "itr-agent": "./dist/index.js"
   },
   "main": "./dist/index.js",
   "files": [

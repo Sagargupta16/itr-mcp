@@ -5,6 +5,11 @@ import { scheduleAdvanceTax } from "./engine/advance-tax.js";
 import { computeTax, type TaxInput } from "./engine/compute.js";
 import { compute80GG, computeHra, type HraPeriod } from "./engine/hra.js";
 import { interest234B, interest234C } from "./engine/interest.js";
+import {
+  filingChecklist,
+  type ItrFormInput,
+  recommendItrForm,
+} from "./engine/itr-form.js";
 import { type ReconcileInput, reconcile } from "./engine/reconcile.js";
 import { availableYears, DEFAULT_FY, loadRulePack } from "./engine/rulepack.js";
 import {
@@ -103,8 +108,8 @@ function fail(message: string) {
 
 export function createServer(): McpServer {
   const server = new McpServer({
-    name: "itr-mcp",
-    version: "0.2.0",
+    name: "itr-agent",
+    version: "0.3.0",
   });
 
   server.registerTool(
@@ -552,6 +557,216 @@ export function createServer(): McpServer {
         return fail(err instanceof Error ? err.message : String(err));
       }
     },
+  );
+
+  server.registerTool(
+    "recommend_itr_form",
+    {
+      title: "Recommend the ITR form",
+      description:
+        "Recommend ITR-1/2/3/4 for an individual from income heads, residency, losses, and disqualifier flags, with rule-by-rule reasoning. Loss-continuity aware: brought-forward business/speculative losses force ITR-3 even with zero current-year business income (Schedule CFL). Returns the filing deadline and 234F late fee for the recommended form.",
+      inputSchema: {
+        fy: z
+          .string()
+          .default(DEFAULT_FY)
+          .describe("Fiscal year, e.g. '2025-26'"),
+        residency: z
+          .enum(["resident", "rnor", "nri"])
+          .default("resident")
+          .describe(
+            "Residential status for the FY (RNOR/NRI cannot file ITR-1/ITR-4)",
+          ),
+        totalIncome: z
+          .number()
+          .min(0)
+          .describe(
+            "Estimated gross total income in INR before Chapter VI-A deductions",
+          ),
+        houseProperties: z
+          .number()
+          .int()
+          .min(0)
+          .default(0)
+          .describe("Number of house properties with income or loss"),
+        stcg111A: z
+          .number()
+          .min(0)
+          .default(0)
+          .describe(
+            "STCG under 111A in INR (any amount rules out ITR-1/ITR-4)",
+          ),
+        ltcg112A: z
+          .number()
+          .min(0)
+          .default(0)
+          .describe("LTCG under 112A in INR before the 1.25L exemption"),
+        hasOtherCapitalGains: z
+          .boolean()
+          .default(false)
+          .describe(
+            "Capital gains outside 111A/112A: property, debt MF, unlisted or foreign shares",
+          ),
+        hasBusinessIncome: z
+          .boolean()
+          .default(false)
+          .describe(
+            "Any business or professional income this year, incl. F&O trading and freelancing",
+          ),
+        presumptive: z
+          .boolean()
+          .default(false)
+          .describe("Opting for presumptive taxation (44AD/44ADA/44AE)"),
+        isPartnerInFirm: z
+          .boolean()
+          .default(false)
+          .describe("Partner in a partnership firm"),
+        businessLoss: z
+          .boolean()
+          .default(false)
+          .describe(
+            "Non-speculative business loss (incl. F&O) brought forward or arising this year",
+          ),
+        speculativeLoss: z
+          .boolean()
+          .default(false)
+          .describe(
+            "Speculative (intraday equity) loss brought forward or arising this year",
+          ),
+        capitalLoss: z
+          .boolean()
+          .default(false)
+          .describe(
+            "Capital loss (STCL/LTCL) brought forward or to carry forward",
+          ),
+        housePropertyLoss: z
+          .boolean()
+          .default(false)
+          .describe("House property loss to carry forward"),
+        hasForeignAssetsOrIncome: z
+          .boolean()
+          .default(false)
+          .describe(
+            "Foreign assets/income incl. vested RSUs or ESPP of a foreign parent (Schedule FA)",
+          ),
+        isDirector: z
+          .boolean()
+          .default(false)
+          .describe("Director in any company during the FY"),
+        holdsUnlistedShares: z
+          .boolean()
+          .default(false)
+          .describe("Held unlisted equity shares during the FY"),
+        agriIncome: z
+          .number()
+          .min(0)
+          .default(0)
+          .describe(
+            "Agricultural income in INR (above 5,000 rules out ITR-1/ITR-4)",
+          ),
+        esopDeferral: z
+          .boolean()
+          .default(false)
+          .describe("Tax deferred on eligible-startup ESOPs (s80-IAC)"),
+        hasLotteryOrGamingIncome: z
+          .boolean()
+          .default(false)
+          .describe("Winnings from lottery, online games, or racehorses"),
+      },
+      annotations: READ_ONLY,
+    },
+    async (args) => {
+      try {
+        const pack = loadRulePack(args.fy);
+        const input: ItrFormInput = {
+          residency: args.residency,
+          totalIncome: args.totalIncome,
+          houseProperties: args.houseProperties,
+          stcg111A: args.stcg111A,
+          ltcg112A: args.ltcg112A,
+          hasOtherCapitalGains: args.hasOtherCapitalGains,
+          hasBusinessIncome: args.hasBusinessIncome,
+          presumptive: args.presumptive,
+          isPartnerInFirm: args.isPartnerInFirm,
+          losses: {
+            business: args.businessLoss,
+            speculative: args.speculativeLoss,
+            capital: args.capitalLoss,
+            houseProperty: args.housePropertyLoss,
+          },
+          hasForeignAssetsOrIncome: args.hasForeignAssetsOrIncome,
+          isDirector: args.isDirector,
+          holdsUnlistedShares: args.holdsUnlistedShares,
+          agriIncome: args.agriIncome,
+          esopDeferral: args.esopDeferral,
+          hasLotteryOrGamingIncome: args.hasLotteryOrGamingIncome,
+        };
+        return ok(recommendItrForm(input, pack));
+      } catch (err) {
+        return fail(err instanceof Error ? err.message : String(err));
+      }
+    },
+  );
+
+  server.registerTool(
+    "filing_checklist",
+    {
+      title: "Step-by-step ITR filing checklist",
+      description:
+        "Ordered, form-specific walkthrough for filing ITR-1/2/3/4 on incometax.gov.in: documents to gather, reconciliation, tax computation, portal steps schedule by schedule, and e-verification. Guidance only -- the taxpayer performs the final submit on the portal themselves.",
+      inputSchema: {
+        fy: z
+          .string()
+          .default(DEFAULT_FY)
+          .describe("Fiscal year, e.g. '2025-26'"),
+        form: z
+          .enum(["ITR-1", "ITR-2", "ITR-3", "ITR-4"])
+          .describe("The ITR form to file (use recommend_itr_form if unsure)"),
+      },
+      annotations: READ_ONLY,
+    },
+    async (args) => {
+      try {
+        const pack = loadRulePack(args.fy);
+        return ok(filingChecklist(args.form, pack));
+      } catch (err) {
+        return fail(err instanceof Error ? err.message : String(err));
+      }
+    },
+  );
+
+  server.registerPrompt(
+    "file_my_itr",
+    {
+      title: "Guided ITR filing interview",
+      description:
+        "Step-by-step ITR filing agent: interviews the taxpayer one question at a time, picks the form, computes tax, reconciles documents, and walks them to the portal's submit button.",
+      argsSchema: {},
+    },
+    () => ({
+      messages: [
+        {
+          role: "user" as const,
+          content: {
+            type: "text" as const,
+            text: [
+              "Act as my ITR filing agent for India. Interview me ONE question at a time -- never a wall of questions -- and drive the itr-agent tools after each answer. Sequence:",
+              "",
+              "1. Residency and age band for the FY.",
+              "2. Income heads, one by one: salary (how many employers), house property (how many), capital gains (equity 111A/112A, anything else), business/professional incl. F&O or freelancing, other sources (interest, dividend).",
+              "3. Disqualifier sweep: foreign assets or RSUs/ESPP of a foreign employer, director role, unlisted shares, agricultural income over 5,000, ESOP deferral, lottery/gaming winnings.",
+              "4. Losses: brought-forward or current-year business/speculative/capital/house-property losses (this changes the form).",
+              "5. Call recommend_itr_form with everything gathered; explain the recommendation and what ruled out simpler forms.",
+              "6. Ask for real amounts, then call compare_regimes (and compute_hra / list_deductions when the old regime is in play). Recommend the regime.",
+              "7. If documents are available, parse them (parse_form26as, parse_ais) and run reconcile_documents; walk me through fixing every finding.",
+              "8. If advance tax applies, call schedule_advance_tax and compute_interest_234.",
+              "9. Finish with filing_checklist for the recommended form and walk me through it step by step, waiting for my confirmation at each portal step.",
+              "",
+              "Rules: use tool outputs for every number (never estimate tax yourself), quote the disclaimers, and be explicit that I press the final submit button on incometax.gov.in myself -- you never file on my behalf.",
+            ].join("\n"),
+          },
+        },
+      ],
+    }),
   );
 
   server.registerTool(

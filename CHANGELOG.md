@@ -3,7 +3,22 @@
 All notable changes to this project will be documented in this file.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versioning follows [SemVer](https://semver.org/).
 
-## [0.2.0] - 2026-07-06
+## [0.3.0] - 2026-07-21
+
+### Changed
+
+- **Renamed `itr-mcp` -> `itr-agent`** (npm package, bin, GitHub repo, MCP server name). The `itr-mcp` npm package is deprecated and frozen at 0.2.0; update MCP configs to `npx -y itr-agent`. GitHub redirects the old repo URL.
+- Positioning: filing agent, not just calculator -- the new prompt + tools guide a filer end to end, while the final submit stays with the taxpayer (no public filing API exists; only authorized ERIs may file on someone's behalf).
+
+### Added
+
+- `recommend_itr_form` ([#3](https://github.com/Sagargupta16/itr-agent/issues/3)): ITR-1/2/3/4 selection for individuals with rule-by-rule reasoning, ruled-out trail, deadlines and 234F late fees from the rule pack. Loss-continuity aware: brought-forward business/speculative losses force ITR-3 even with zero current-year business income (Schedule CFL), including the nil-business ITR-3 mechanics guidance (No Account Case zeros, nil Trading & P&L). Encodes the AY 2025-26 carve-in of 112A LTCG up to Rs 1.25L into ITR-1/ITR-4. Eligibility rules per incometax.gov.in "Which ITR is applicable" (AY 2026-27)
+- `filing_checklist`: ordered, form-specific walkthrough (gather -> reconcile -> compute -> portal -> e-verify) with schedule-level portal steps per form and the explicit taxpayer-presses-submit boundary
+- `file_my_itr` MCP prompt: the guided interview -- one question at a time, income heads, disqualifier sweep, losses, then form -> regime -> reconciliation -> checklist, all numbers from tools
+
+### Fixed
+
+- Stale test title ("lists all six tools") corrected to the actual twelve-tool surface
 
 ### Added
 

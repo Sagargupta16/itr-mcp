@@ -15,8 +15,8 @@ async function connectedClient() {
   return client;
 }
 
-describe("itr-mcp server", () => {
-  it("lists all six tools", async () => {
+describe("itr-agent server", () => {
+  it("lists all twelve tools", async () => {
     const client = await connectedClient();
     const { tools } = await client.listTools();
     const names = tools.map((t) => t.name).sort();
@@ -25,10 +25,12 @@ describe("itr-mcp server", () => {
       "compute_hra",
       "compute_interest_234",
       "compute_tax",
+      "filing_checklist",
       "list_deductions",
       "list_tax_years",
       "parse_ais",
       "parse_form26as",
+      "recommend_itr_form",
       "reconcile_documents",
       "schedule_advance_tax",
     ]);
@@ -81,5 +83,54 @@ describe("itr-mcp server", () => {
     expect(result.isError).toBe(true);
     const text = (result.content as { text: string }[])[0]?.text ?? "";
     expect(text).toContain("TRACES Text export");
+  });
+
+  it("recommend_itr_form returns structured content with reasoning", async () => {
+    const client = await connectedClient();
+    const result = await client.callTool({
+      name: "recommend_itr_form",
+      arguments: { totalIncome: 1800000, hasForeignAssetsOrIncome: true },
+    });
+    expect(result.isError).toBeFalsy();
+    const sc = result.structuredContent as {
+      recommended: string;
+      ruledOut: { form: string; rule: string }[];
+      dueDate: string;
+    };
+    expect(sc.recommended).toBe("ITR-2");
+    expect(sc.ruledOut.length).toBeGreaterThan(0);
+    expect(sc.dueDate).toBe("2026-07-31");
+  });
+
+  it("filing_checklist returns ordered steps for the form", async () => {
+    const client = await connectedClient();
+    const result = await client.callTool({
+      name: "filing_checklist",
+      arguments: { form: "ITR-2" },
+    });
+    expect(result.isError).toBeFalsy();
+    const sc = result.structuredContent as {
+      form: string;
+      steps: { step: number; phase: string }[];
+    };
+    expect(sc.form).toBe("ITR-2");
+    expect(sc.steps[0]?.step).toBe(1);
+    expect(sc.steps.at(-1)?.phase).toBe("verify");
+  });
+
+  it("exposes the file_my_itr guided prompt", async () => {
+    const client = await connectedClient();
+    const { prompts } = await client.listPrompts();
+    expect(prompts.map((p) => p.name)).toContain("file_my_itr");
+    const prompt = await client.getPrompt({
+      name: "file_my_itr",
+      arguments: {},
+    });
+    const text =
+      prompt.messages[0]?.content.type === "text"
+        ? prompt.messages[0].content.text
+        : "";
+    expect(text).toContain("ONE question at a time");
+    expect(text).toContain("never file on my behalf");
   });
 });

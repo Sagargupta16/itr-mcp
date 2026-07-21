@@ -10,7 +10,7 @@
 
 ## Project
 
-Local-first MCP server for Indian income tax (FY 2025-26 / AY 2026-27): deterministic tax engine + document parsers exposed as MCP tools over stdio. Public OSS, npm package `itr-mcp`. Positioning: privacy-first -- everything runs on-device, unlike cloud finance MCPs (Fi/INDmoney).
+Local-first MCP server for Indian income tax (FY 2025-26 / AY 2026-27): deterministic tax engine + document parsers exposed as MCP tools over stdio. Public OSS, npm package `itr-agent`. Positioning: privacy-first -- everything runs on-device, unlike cloud finance MCPs (Fi/INDmoney).
 
 ## Stack
 
@@ -18,7 +18,7 @@ Local-first MCP server for Indian income tax (FY 2025-26 / AY 2026-27): determin
 - **Framework**: @modelcontextprotocol/sdk 1.29 (stdio transport only), zod 4
 - **Database**: none -- rule packs are JSON files in `data/`
 - **Package manager**: pnpm
-- **Deploy target**: npm registry (`npx -y itr-mcp`); .mcpb Desktop bundle planned
+- **Deploy target**: npm registry (`npx -y itr-agent`); .mcpb Desktop bundle planned
 
 ## Run
 
